@@ -1,140 +1,255 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QuickBite — Order App</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+  <title>SnapBite</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <!-- TOP NAV (hidden on sign-in page) -->
-  <div id="topNav" class="top-nav hidden">
-    <button id="backBtn" class="back-btn" onclick="goBack()">&#8592;</button>
-    <span id="pageTitle" class="page-title">Menu</span>
-    <button class="icon-btn" onclick="showPage('history')">&#128203;</button>
-  </div>
 
-  <!-- PAGE 1: SIGN IN / SIGN UP -->
-  <div id="page-auth" class="page active">
-    <div class="auth-header">
-      <div class="logo">&#127829;</div>
-      <h1>QuickBite</h1>
-      <p>Fast food, faster delivery</p>
+<!-- TOP BAR -->
+<header id="topBar" class="top-bar hidden">
+  <button class="tb-icon" id="backBtn" onclick="goBack()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <span id="topBarTitle" class="tb-title"></span>
+  <button class="tb-icon" id="topBarRight" onclick="navTo('orders')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+  </button>
+</header>
+
+<!-- PAGE 1: AUTH -->
+<div id="page-auth" class="page active">
+  <div class="auth-glows">
+    <div class="glow g-pink"></div>
+    <div class="glow g-cyan"></div>
+  </div>
+  <div class="auth-body">
+    <div class="auth-brand">
+      <div class="auth-logo"><span class="lp">S</span><span class="lw">nap</span><span class="lc">Bite</span></div>
+      <p class="auth-tagline">Order · Track · Devour</p>
     </div>
-    <div class="card">
-      <div class="tab-row">
-        <button class="tab active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
-        <button class="tab" id="tabSignup" onclick="switchTab('signup')">Sign Up</button>
+    <div class="glass-card">
+      <div class="seg-tabs">
+        <button class="seg active" id="tabLogin" onclick="switchTab('login')">Log In</button>
+        <button class="seg" id="tabSignup" onclick="switchTab('signup')">Sign Up</button>
       </div>
+      <!-- Social login -->
+      <div class="social-btns">
+        <button class="social-btn social-fb" onclick="socialLogin('facebook')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          Continue with Facebook
+        </button>
+        <button class="social-btn social-em" onclick="socialLogin('email')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          Continue with Email
+        </button>
+      </div>
+      <div class="divider"><span>or</span></div>
+
       <div id="loginForm">
-        <input class="input" type="email" id="loginEmail" placeholder="Email" />
-        <input class="input" type="password" id="loginPass" placeholder="Password" />
-        <div id="loginError" class="error-msg"></div>
-        <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+        <div class="field"><span class="fi">✉️</span><input class="inp" type="email" id="loginEmail" placeholder="Email address"/></div>
+        <div class="field"><span class="fi">🔒</span><input class="inp" type="password" id="loginPass" placeholder="Password"/></div>
+        <div class="err" id="loginErr"></div>
+        <button class="btn-main" onclick="doLogin()">Log In</button>
       </div>
       <div id="signupForm" class="hidden">
-        <input class="input" type="text" id="signupName" placeholder="Full Name" />
-        <input class="input" type="email" id="signupEmail" placeholder="Email" />
-        <input class="input" type="password" id="signupPass" placeholder="Password" />
-        <div id="signupError" class="error-msg"></div>
-        <button class="btn btn-primary" onclick="doSignup()">Create Account</button>
+        <div class="field"><span class="fi">👤</span><input class="inp" type="text" id="signupName" placeholder="Full Name"/></div>
+        <div class="field"><span class="fi">✉️</span><input class="inp" type="email" id="signupEmail" placeholder="Email address"/></div>
+        <div class="field"><span class="fi">🔒</span><input class="inp" type="password" id="signupPass" placeholder="Password (6+ chars)"/></div>
+        <div class="err" id="signupErr"></div>
+        <button class="btn-main" onclick="doSignup()">Create Account</button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- PAGE 2: PRODUCTS -->
-  <div id="page-products" class="page">
-    <div class="search-bar">
-      <input class="input search-input" type="text" placeholder="&#128269; Search food..." oninput="filterProducts(this.value)" />
-    </div>
-    <div id="productGrid" class="product-grid"></div>
-    <div id="cartFab" class="cart-fab hidden" onclick="showPage('summary')">
-      <span>&#128722;</span>
-      <span id="cartCount" class="cart-badge">0</span>
-    </div>
+<!-- PAGE 2: HOME -->
+<div id="page-home" class="page">
+
+  <!-- Feed top bar overlay -->
+  <div class="feed-topbar">
+    <div class="feed-cats" id="feedCats"></div>
+    <button class="feed-search-btn" onclick="toggleFeedSearch()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
+  </div>
+  <div class="feed-search-bar hidden" id="feedSearchBar">
+    <svg class="s-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="inp search-inp" type="text" id="feedSearchInp" placeholder="Search items..." oninput="homeSearch(this.value)"/>
   </div>
 
-  <!-- PAGE 3: ORDER SUMMARY -->
-  <div id="page-summary" class="page">
-    <div id="cartItems" class="cart-list"></div>
-    <div class="price-card card">
-      <div class="price-row"><span>Subtotal</span><span id="subtotal">₱0.00</span></div>
-      <div class="price-row"><span>Delivery Fee</span><span>₱50.00</span></div>
-      <div class="price-row total-row"><span>Total</span><span id="totalPrice">₱0.00</span></div>
-    </div>
-    <button class="btn btn-primary sticky-btn" onclick="showPage('address')">Proceed to Delivery</button>
-  </div>
+  <div class="home-greeting" id="heroGreet">Hey there 👋</div>
 
-  <!-- PAGE 4: DELIVERY ADDRESS -->
-  <div id="page-address" class="page">
-    <div class="card form-card">
-      <input class="input" type="text" id="addrName" placeholder="Full Name" />
-      <input class="input" type="tel" id="addrPhone" placeholder="Phone Number" />
-      <input class="input" type="text" id="addrStreet" placeholder="Full Address" />
-      <input class="input" type="text" id="addrCity" placeholder="City" />
-      <input class="input" type="text" id="addrPostal" placeholder="Postal Code" />
-      <div id="addrError" class="error-msg"></div>
-    </div>
-    <button class="btn btn-primary sticky-btn" onclick="saveAddress()">Save &amp; Continue</button>
-  </div>
+  <div class="section-hd"><span>🔥 Hot Right Now</span></div>
+  <div class="featured-row" id="featuredRow"></div>
 
-  <!-- PAGE 5: PAYMENT -->
-  <div id="page-payment" class="page">
-    <div class="payment-options">
-      <div class="payment-card" id="pay-card" onclick="selectPayment('card')">
-        <span class="pay-icon">&#128179;</span>
-        <span>Credit / Debit Card</span>
+  <div class="section-hd"><span id="allHd">All Items</span></div>
+  <div class="item-grid" id="homeGrid"></div>
+
+  <div id="cartFab" class="cart-fab hidden" onclick="navTo('cart')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    <span id="cartCount" class="cart-badge">0</span>
+  </div>
+</div>
+
+<!-- PAGE 3: CART -->
+<div id="page-cart" class="page">
+  <div id="cartBody"></div>
+  <div id="cartPricePanel" class="price-panel hidden">
+    <div class="price-row"><span>Subtotal</span><span id="cartSubtotal">₱0.00</span></div>
+    <div class="price-row"><span>Delivery Fee</span><span>₱50.00</span></div>
+    <div class="price-row price-total"><span>Total</span><span id="cartTotal">₱0.00</span></div>
+  </div>
+  <div class="sticky-foot">
+    <button class="btn-main" onclick="navTo('address')">Proceed to Checkout →</button>
+  </div>
+</div>
+
+<!-- PAGE 4: ADDRESS -->
+<div id="page-address" class="page">
+  <div class="section-hd"><span>📍 Delivery Address</span></div>
+  <div class="glass-card form-card">
+    <div class="field"><span class="fi">👤</span><input class="inp" type="text" id="addrName" placeholder="Full Name"/></div>
+    <div class="field"><span class="fi">📞</span><input class="inp" type="tel" id="addrPhone" placeholder="Phone Number"/></div>
+    <div class="field"><span class="fi">🏠</span><input class="inp" type="text" id="addrStreet" placeholder="Street / House No."/></div>
+    <div class="field"><span class="fi">🏙️</span><input class="inp" type="text" id="addrCity" placeholder="City / Municipality"/></div>
+    <div class="field"><span class="fi">#️⃣</span><input class="inp" type="text" id="addrPostal" placeholder="Postal / ZIP Code"/></div>
+    <div class="field"><span class="fi">📝</span><input class="inp" type="text" id="addrNote" placeholder="Delivery note (optional)"/></div>
+    <div class="err" id="addrErr"></div>
+  </div>
+  <div class="sticky-foot">
+    <button class="btn-main" onclick="saveAddress()">Save &amp; Continue →</button>
+  </div>
+</div>
+
+<!-- PAGE 5: PAYMENT -->
+<div id="page-payment" class="page">
+  <div class="section-hd"><span>💳 Payment Method</span></div>
+  <div class="pay-options">
+    <div class="pay-card" id="pay-card" onclick="selectPay('card')">
+      <div class="pay-left">
+        <div class="pay-ico">💳</div>
+        <div><div class="pay-name">Credit / Debit Card</div><div class="pay-sub">Visa · Mastercard · JCB</div></div>
       </div>
-      <div class="payment-card" id="pay-gcash" onclick="selectPayment('gcash')">
-        <span class="pay-icon">&#128241;</span>
-        <span>GCash / E-Wallet</span>
-      </div>
-      <div class="payment-card" id="pay-cod" onclick="selectPayment('cod')">
-        <span class="pay-icon">&#128181;</span>
-        <span>Cash on Delivery</span>
-      </div>
+      <div class="pay-dot"></div>
     </div>
-    <div id="cardFields" class="card form-card hidden">
-      <input class="input" type="text" id="cardNum" placeholder="Card Number" maxlength="19" oninput="formatCard(this)" />
-      <div class="row-2">
-        <input class="input" type="text" id="cardExp" placeholder="MM/YY" maxlength="5" />
-        <input class="input" type="text" id="cardCvv" placeholder="CVV" maxlength="3" />
+    <div class="pay-card" id="pay-gcash" onclick="selectPay('gcash')">
+      <div class="pay-left">
+        <div class="pay-ico">📱</div>
+        <div><div class="pay-name">GCash / E-Wallet</div><div class="pay-sub">GCash · Maya · ShopeePay</div></div>
       </div>
+      <div class="pay-dot"></div>
     </div>
-    <div id="payError" class="error-msg" style="padding:0 16px"></div>
-    <button class="btn btn-primary sticky-btn" onclick="placeOrder()">Place Order</button>
-  </div>
-
-  <!-- PAGE 6: ORDER TRACKING -->
-  <div id="page-tracking" class="page">
-    <div class="tracking-map card">
-      <div class="map-anim">
-        <div class="road"></div>
-        <div id="bikeIcon" class="bike">&#128690;</div>
-        <div class="dest">&#127968;</div>
+    <div class="pay-card" id="pay-cod" onclick="selectPay('cod')">
+      <div class="pay-left">
+        <div class="pay-ico">💵</div>
+        <div><div class="pay-name">Cash on Delivery</div><div class="pay-sub">Pay when it arrives</div></div>
       </div>
-    </div>
-    <div class="tracker-steps card">
-      <div class="step" id="step0"><div class="step-dot active"></div><span>Order Placed</span></div>
-      <div class="step-line" id="line0"></div>
-      <div class="step" id="step1"><div class="step-dot"></div><span>Preparing</span></div>
-      <div class="step-line" id="line1"></div>
-      <div class="step" id="step2"><div class="step-dot"></div><span>Out for Delivery</span></div>
-      <div class="step-line" id="line2"></div>
-      <div class="step" id="step3"><div class="step-dot"></div><span>Delivered</span></div>
-    </div>
-    <div class="card order-recap">
-      <p id="trackEta" class="eta-text">Estimated delivery: ~30 mins</p>
-      <div id="trackItems"></div>
-      <div class="price-row total-row"><span>Total</span><span id="trackTotal"></span></div>
+      <div class="pay-dot"></div>
     </div>
   </div>
-
-  <!-- PAGE 7: ORDER HISTORY -->
-  <div id="page-history" class="page">
-    <div id="historyList" class="history-list"></div>
+  <div id="cardFields" class="glass-card form-card hidden">
+    <div class="card-preview">
+      <div class="card-chip"></div>
+      <div class="card-brand">VISA</div>
+    </div>
+    <div class="field"><span class="fi">💳</span><input class="inp" type="text" id="cardNum" placeholder="1234  5678  9012  3456" maxlength="19" oninput="fmtCard(this)"/></div>
+    <div class="row2">
+      <div class="field" style="flex:1"><span class="fi">📅</span><input class="inp" type="text" id="cardExp" placeholder="MM/YY" maxlength="5"/></div>
+      <div class="field" style="flex:1"><span class="fi">🔑</span><input class="inp" type="text" id="cardCvv" placeholder="CVV" maxlength="3"/></div>
+    </div>
+    <div class="field"><span class="fi">👤</span><input class="inp" type="text" id="cardName" placeholder="Name on card"/></div>
   </div>
+  <div class="glass-card pay-summary">
+    <div class="pay-sum-title">Order Summary</div>
+    <div id="paySumItems"></div>
+    <div class="price-row price-total" style="margin-top:8px"><span>Total</span><span id="payTotal">₱0.00</span></div>
+  </div>
+  <div class="err" id="payErr" style="padding:0 4px 4px"></div>
+  <div class="sticky-foot">
+    <button class="btn-main" onclick="placeOrder()">🎉 Place Order</button>
+  </div>
+</div>
 
-  <script src="app.js"></script>
+<!-- PAGE 6: TRACKING -->
+<div id="page-tracking" class="page">
+  <div class="track-map glass-card">
+    <div class="map-dots"></div>
+    <div class="map-road"></div>
+    <div class="map-store">🍽️</div>
+    <div id="riderEl" class="map-rider">🛵</div>
+    <div class="map-home">🏠</div>
+    <div id="trackEta" class="track-eta-pill">~30 mins</div>
+  </div>
+  <div class="track-steps glass-card">
+    <div class="ts-item" id="ts0"><div class="ts-dot active"><span>✓</span></div><div class="ts-lbl">Order<br/>Placed</div></div>
+    <div class="ts-line" id="tl0"></div>
+    <div class="ts-item" id="ts1"><div class="ts-dot"><span>🍳</span></div><div class="ts-lbl">Preparing</div></div>
+    <div class="ts-line" id="tl1"></div>
+    <div class="ts-item" id="ts2"><div class="ts-dot"><span>🛵</span></div><div class="ts-lbl">On the<br/>Way</div></div>
+    <div class="ts-line" id="tl2"></div>
+    <div class="ts-item" id="ts3"><div class="ts-dot"><span>🏠</span></div><div class="ts-lbl">Delivered</div></div>
+  </div>
+  <div class="glass-card track-info">
+    <div class="ti-row"><span class="ti-label">Order ID</span><span id="tiOrderId" class="ti-val">#000000</span></div>
+    <div class="ti-row"><span class="ti-label">Rider</span><span class="ti-val">Juan dela Cruz 🛵</span></div>
+    <div class="ti-row"><span class="ti-label">Address</span><span id="tiAddr" class="ti-val">—</span></div>
+    <div class="ti-row"><span class="ti-label">Payment</span><span id="tiPay" class="ti-val">—</span></div>
+  </div>
+  <div class="glass-card">
+    <div class="recap-hd">Your Items</div>
+    <div id="trackItems"></div>
+    <div class="price-row price-total" style="margin-top:10px"><span>Total</span><span id="trackTotal"></span></div>
+  </div>
+  <div class="sticky-foot">
+    <button class="btn-main" onclick="navTo('home')">Back to Home</button>
+  </div>
+</div>
+
+<!-- PAGE 7: ORDERS HISTORY -->
+<div id="page-orders" class="page">
+  <div id="ordersList"></div>
+</div>
+
+<!-- PAGE 8: PROFILE -->
+<div id="page-profile" class="page">
+  <div class="profile-hero glass-card">
+    <div class="profile-avatar" id="profileAvatar">👤</div>
+    <div class="profile-name" id="profileName">—</div>
+    <div class="profile-email" id="profileEmail">—</div>
+  </div>
+  <div class="profile-menu">
+    <div class="pm-item" onclick="navTo('orders')"><span>📋</span><span>My Orders</span><span class="pm-arrow">›</span></div>
+    <div class="pm-item" onclick="navTo('address')"><span>📍</span><span>Saved Address</span><span class="pm-arrow">›</span></div>
+    <div class="pm-item pm-logout" onclick="doLogout()"><span>🚪</span><span>Log Out</span><span class="pm-arrow">›</span></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav id="bottomNav" class="bottom-nav hidden">
+  <button class="nav-btn" id="nav-home" onclick="navTo('home')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="nav-btn" id="nav-cart" onclick="navTo('cart')">
+    <div class="nav-icon-wrap">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <span id="navCartBadge" class="nav-badge hidden">0</span>
+    </div>
+    <span>Cart</span>
+  </button>
+  <button class="nav-btn" id="nav-orders" onclick="navTo('orders')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span>Orders</span>
+  </button>
+  <button class="nav-btn" id="nav-profile" onclick="navTo('profile')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Profile</span>
+  </button>
+</nav>
+
+<script src="app.js"></script>
 </body>
 </html>

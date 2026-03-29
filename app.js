@@ -1,370 +1,444 @@
-// ===== PRODUCTS DATA =====
+// ===== DATA =====
 const PRODUCTS = [
-  { id: 1, name: 'Cheeseburger', emoji: '🍔', price: 149, desc: 'Juicy beef patty with melted cheese' },
-  { id: 2, name: 'Pepperoni Pizza', emoji: '🍕', price: 299, desc: 'Classic pepperoni on crispy crust' },
-  { id: 3, name: 'Chicken Wings', emoji: '🍗', price: 199, desc: 'Crispy wings with dipping sauce' },
-  { id: 4, name: 'Sushi Roll', emoji: '🍣', price: 249, desc: 'Fresh salmon & avocado roll' },
-  { id: 5, name: 'Ramen Bowl', emoji: '🍜', price: 189, desc: 'Rich tonkotsu broth with noodles' },
-  { id: 6, name: 'Caesar Salad', emoji: '🥗', price: 129, desc: 'Crisp romaine with caesar dressing' },
-  { id: 7, name: 'Tacos', emoji: '🌮', price: 159, desc: 'Three soft tacos with salsa & guac' },
-  { id: 8, name: 'Fried Rice', emoji: '🍚', price: 139, desc: 'Wok-fried rice with egg & veggies' },
-  { id: 9, name: 'Hot Dog', emoji: '🌭', price: 99,  desc: 'Classic frank with mustard & ketchup' },
-  { id: 10, name: 'Ice Cream', emoji: '🍦', price: 89,  desc: 'Creamy soft-serve, 3 flavors' },
+  { id:1,  name:'Wireless Earbuds',    emoji:'\uD83C\uDFA7', price:899,  desc:'True wireless, 24hr battery life',   cat:'Electronics', hot:true  },
+  { id:2,  name:'Smart Watch',         emoji:'\u231A',        price:1499, desc:'Heart rate, GPS, sleep tracking',    cat:'Electronics', hot:true  },
+  { id:3,  name:'Running Sneakers',    emoji:'\uD83D\uDC5F', price:1299, desc:'Lightweight, breathable mesh upper', cat:'Footwear',    hot:true  },
+  { id:4,  name:'Graphic Tee',         emoji:'\uD83D\uDC55', price:349,  desc:'100% cotton, unisex streetwear fit', cat:'Clothing',    hot:false },
+  { id:5,  name:'Denim Jacket',        emoji:'\uD83E\uDDE5', price:999,  desc:'Classic slim-fit, washed denim',     cat:'Clothing',    hot:false },
+  { id:6,  name:'Leather Wallet',      emoji:'\uD83D\uDC5C', price:499,  desc:'Slim RFID-blocking genuine leather', cat:'Accessories', hot:false },
+  { id:7,  name:'Sunglasses',          emoji:'\uD83D\uDD76', price:599,  desc:'UV400 polarized, metal frame',       cat:'Accessories', hot:false },
+  { id:8,  name:'Portable Charger',    emoji:'\uD83D\uDD0B', price:749,  desc:'20,000mAh, fast charge, dual USB-C', cat:'Electronics', hot:false },
+  { id:9,  name:'Yoga Mat',            emoji:'\uD83E\uDDD8', price:449,  desc:'Non-slip, 6mm thick, carry strap',   cat:'Sports',      hot:false },
+  { id:10, name:'Baseball Cap',        emoji:'\uD83E\uDDE2', price:299,  desc:'Adjustable strap, embroidered logo', cat:'Accessories', hot:false },
+  { id:11, name:'Mechanical Keyboard', emoji:'\uD83D\uDCBB', price:1899, desc:'RGB backlit, tactile switches',      cat:'Electronics', hot:true  },
+  { id:12, name:'Slip-on Sandals',     emoji:'\uD83D\uDC61', price:399,  desc:'Memory foam insole, water-resistant',cat:'Footwear',    hot:false },
 ];
+const CATS = ['All','Electronics','Clothing','Footwear','Accessories','Sports'];
 
 // ===== STATE =====
-let cart = JSON.parse(localStorage.getItem('qb_cart') || '[]');
-let currentPage = 'auth';
-let pageHistory = [];
-let selectedPayment = null;
-let trackingInterval = null;
-let trackStep = 0;
+let cart     = JSON.parse(localStorage.getItem('sb_cart')    || '[]');
+let curPage  = 'auth';
+let history  = [];
+let selPay   = null;
+let trackInt = null;
+let tStep    = 0;
+let activeCat= 'All';
 
-// ===== PAGE NAVIGATION =====
-const PAGE_TITLES = {
-  products: 'Menu',
-  summary: 'Order Summary',
-  address: 'Delivery Address',
-  payment: 'Payment',
-  tracking: 'Order Tracking',
-  history: 'Order History',
-};
+// pages that show bottom nav
+const NAV_PAGES = ['home','cart','orders','profile'];
+const TITLES = { home:'SnapBite', cart:'Your Cart', address:'Delivery', payment:'Payment', tracking:'Tracking', orders:'My Orders', profile:'Profile' };
 
-function showPage(name, addHistory = true) {
+// ===== NAVIGATION =====
+function navTo(name) { showPage(name, true, false); }
+function goBack()    { if(history.length) showPage(history.pop(), false, true); }
+
+function showPage(name, push=true, back=false) {
   const prev = document.querySelector('.page.active');
-  if (prev) {
-    prev.classList.remove('active');
-    prev.style.display = 'none';
-  }
+  if(prev){ prev.classList.remove('active'); prev.style.display='none'; }
 
-  if (addHistory && currentPage !== name) {
-    pageHistory.push(currentPage);
-  }
-  currentPage = name;
+  if(push && curPage !== name) history.push(curPage);
+  curPage = name;
 
-  const next = document.getElementById('page-' + name);
+  const next = document.getElementById('page-'+name);
   next.style.display = 'block';
-  // force reflow for animation
   next.getBoundingClientRect();
-  next.classList.add('active', 'slide-in');
-  setTimeout(() => next.classList.remove('slide-in'), 400);
+  next.classList.add('active', back ? 'slide-back' : 'slide-in');
+  setTimeout(()=>next.classList.remove('slide-in','slide-back'), 300);
 
-  const nav = document.getElementById('topNav');
-  if (name === 'auth') {
-    nav.classList.add('hidden');
+  // top bar
+  const tb = document.getElementById('topBar');
+  const bn = document.getElementById('bottomNav');
+  if(name === 'auth'){
+    tb.classList.add('hidden');
+    bn.classList.add('hidden');
   } else {
-    nav.classList.remove('hidden');
-    document.getElementById('pageTitle').textContent = PAGE_TITLES[name] || '';
+    tb.classList.remove('hidden');
+    document.getElementById('topBarTitle').textContent = TITLES[name]||'';
+    // hide right icon on pages where it doesn't make sense
+    const tr = document.getElementById('topBarRight');
+    tr.style.visibility = (name==='orders'||name==='profile') ? 'hidden' : 'visible';
+    // bottom nav
+    if(NAV_PAGES.includes(name)){
+      bn.classList.remove('hidden');
+      document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+      const nb = document.getElementById('nav-'+name);
+      if(nb) nb.classList.add('active');
+    } else {
+      bn.classList.add('hidden');
+    }
   }
 
-  // page-specific init
-  if (name === 'products') renderProducts(PRODUCTS);
-  if (name === 'summary') renderSummary();
-  if (name === 'tracking') startTracking();
-  if (name === 'history') renderHistory();
-  if (name === 'address') prefillAddress();
-}
-
-function goBack() {
-  if (pageHistory.length > 0) {
-    const prev = pageHistory.pop();
-    showPage(prev, false);
-  }
+  // page init hooks
+  if(name==='home')     initHome();
+  if(name==='cart')     renderCart();
+  if(name==='address')  prefillAddr();
+  if(name==='payment')  initPayment();
+  if(name==='tracking') startTracking();
+  if(name==='orders')   renderOrders();
+  if(name==='profile')  renderProfile();
 }
 
 // ===== AUTH =====
-function switchTab(tab) {
-  document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
-  document.getElementById('signupForm').classList.toggle('hidden', tab !== 'signup');
-  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
-  document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+function switchTab(t){
+  document.getElementById('loginForm').classList.toggle('hidden', t!=='login');
+  document.getElementById('signupForm').classList.toggle('hidden', t!=='signup');
+  document.getElementById('tabLogin').classList.toggle('active', t==='login');
+  document.getElementById('tabSignup').classList.toggle('active', t==='signup');
 }
 
-function doLogin() {
+function doLogin(){
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value;
-  const err   = document.getElementById('loginError');
+  const err   = document.getElementById('loginErr');
   err.textContent = '';
-
-  if (!email || !pass) { err.textContent = 'Please fill in all fields.'; return; }
-
-  const users = JSON.parse(localStorage.getItem('qb_users') || '[]');
-  const user  = users.find(u => u.email === email && u.password === pass);
-  if (!user) { err.textContent = 'Invalid email or password.'; return; }
-
-  localStorage.setItem('qb_session', JSON.stringify(user));
-  showPage('products');
+  if(!email||!pass){ err.textContent='Fill in all fields.'; return; }
+  const users = JSON.parse(localStorage.getItem('sb_users')||'[]');
+  const user  = users.find(u=>u.email===email && u.password===pass);
+  if(!user){ err.textContent='Wrong email or password.'; return; }
+  localStorage.setItem('sb_session', JSON.stringify(user));
+  showPage('home', false);
 }
 
-function doSignup() {
+function doSignup(){
   const name  = document.getElementById('signupName').value.trim();
   const email = document.getElementById('signupEmail').value.trim();
   const pass  = document.getElementById('signupPass').value;
-  const err   = document.getElementById('signupError');
+  const err   = document.getElementById('signupErr');
   err.textContent = '';
-
-  if (!name || !email || !pass) { err.textContent = 'Please fill in all fields.'; return; }
-  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
-
-  const users = JSON.parse(localStorage.getItem('qb_users') || '[]');
-  if (users.find(u => u.email === email)) { err.textContent = 'Email already registered.'; return; }
-
-  users.push({ name, email, password: pass });
-  localStorage.setItem('qb_users', JSON.stringify(users));
-  localStorage.setItem('qb_session', JSON.stringify({ name, email }));
-  showPage('products');
+  if(!name||!email||!pass){ err.textContent='Fill in all fields.'; return; }
+  if(pass.length<6){ err.textContent='Password needs 6+ characters.'; return; }
+  const users = JSON.parse(localStorage.getItem('sb_users')||'[]');
+  if(users.find(u=>u.email===email)){ err.textContent='Email already in use.'; return; }
+  users.push({name,email,password:pass});
+  localStorage.setItem('sb_users', JSON.stringify(users));
+  localStorage.setItem('sb_session', JSON.stringify({name,email}));
+  showPage('home', false);
 }
 
-// ===== PRODUCTS =====
-function renderProducts(list) {
-  const grid = document.getElementById('productGrid');
-  grid.innerHTML = list.map(p => {
-    const inCart = cart.find(c => c.id === p.id);
-    return `
-      <div class="product-card">
-        <div class="product-img">${p.emoji}</div>
-        <div class="product-info">
-          <div class="product-name">${p.name}</div>
-          <div class="product-desc">${p.desc}</div>
-          <div class="product-price">₱${p.price.toFixed(2)}</div>
-          <button class="add-btn ${inCart ? 'added' : ''}" id="addbtn-${p.id}" onclick="addToCart(${p.id})">
-            ${inCart ? '✓ Added' : '+ Add'}
-          </button>
-        </div>
-      </div>`;
-  }).join('');
-  updateCartFab();
+function doLogout(){
+  localStorage.removeItem('sb_session');
+  cart=[]; saveCart();
+  history=[];
+  showPage('auth', false);
 }
 
-function filterProducts(query) {
-  const q = query.toLowerCase();
-  const filtered = PRODUCTS.filter(p =>
-    p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)
-  );
-  renderProducts(filtered);
-}
-
-function addToCart(id) {
-  const product = PRODUCTS.find(p => p.id === id);
-  const existing = cart.find(c => c.id === id);
-  if (existing) {
-    existing.qty += 1;
-  } else {
-    cart.push({ ...product, qty: 1 });
-  }
-  saveCart();
-  updateCartFab();
-
-  const btn = document.getElementById('addbtn-' + id);
-  if (btn) { btn.textContent = '✓ Added'; btn.classList.add('added'); }
-}
-
-function updateCartFab() {
-  const total = cart.reduce((s, i) => s + i.qty, 0);
-  const fab = document.getElementById('cartFab');
-  document.getElementById('cartCount').textContent = total;
-  fab.classList.toggle('hidden', total === 0);
-}
-
-function saveCart() {
-  localStorage.setItem('qb_cart', JSON.stringify(cart));
-}
-
-// ===== ORDER SUMMARY =====
-function renderSummary() {
-  const list = document.getElementById('cartItems');
-  if (cart.length === 0) {
-    list.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px 0">Your cart is empty</p>';
-    document.getElementById('subtotal').textContent = '₱0.00';
-    document.getElementById('totalPrice').textContent = '₱50.00';
+// ===== SOCIAL LOGIN =====
+function socialLogin(provider){
+  // Simulate OAuth — in production wire up real SDK here
+  const profiles = {
+    facebook: { name:'Facebook User', email:'fb.user@snapbite.app' },
+    email:    null, // falls through to show the email form
+  };
+  if(provider === 'email'){
+    // just scroll focus to the email field
+    switchTab('login');
+    setTimeout(()=>document.getElementById('loginEmail').focus(), 50);
     return;
   }
-
-  list.innerHTML = cart.map(item => `
-    <div class="cart-item">
-      <div class="cart-item-emoji">${item.emoji}</div>
-      <div class="cart-item-info">
-        <div class="cart-item-name">${item.name}</div>
-        <div class="cart-item-price">₱${(item.price * item.qty).toFixed(2)}</div>
-      </div>
-      <div class="qty-controls">
-        <button class="qty-btn" onclick="changeQty(${item.id}, -1)">−</button>
-        <span class="qty-num">${item.qty}</span>
-        <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
-      </div>
-      <button class="remove-btn" onclick="removeItem(${item.id})">🗑</button>
-    </div>`).join('');
-
-  const sub = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  document.getElementById('subtotal').textContent = '₱' + sub.toFixed(2);
-  document.getElementById('totalPrice').textContent = '₱' + (sub + 50).toFixed(2);
+  const p = profiles[provider];
+  // auto-register/login the social user
+  const users = JSON.parse(localStorage.getItem('sb_users')||'[]');
+  if(!users.find(u=>u.email===p.email)){
+    users.push({ name:p.name, email:p.email, password:'__social__', provider });
+    localStorage.setItem('sb_users', JSON.stringify(users));
+  }
+  localStorage.setItem('sb_session', JSON.stringify({ name:p.name, email:p.email, provider }));
+  showPage('home', false);
 }
 
-function changeQty(id, delta) {
-  const item = cart.find(c => c.id === id);
-  if (!item) return;
-  item.qty += delta;
-  if (item.qty <= 0) removeItem(id);
-  else { saveCart(); renderSummary(); updateCartFab(); }
+// ===== HOME =====
+let feedList = [...PRODUCTS];
+
+function initHome(){
+  const s = JSON.parse(localStorage.getItem('sb_session')||'{}');
+  document.getElementById('heroGreet').textContent =
+    s.name ? 'Hey, '+s.name.split(' ')[0]+' 👋' : 'Hey there 👋';
+  renderFeedCats();
+  renderFeatured();
+  renderGrid(feedList);
+  updateFab();
 }
 
-function removeItem(id) {
-  cart = cart.filter(c => c.id !== id);
-  saveCart();
-  renderSummary();
-  updateCartFab();
-  // refresh add buttons if on products
-  if (currentPage === 'products') renderProducts(PRODUCTS);
+function renderFeedCats(){
+  document.getElementById('feedCats').innerHTML = CATS.map(c=>
+    '<div class="feed-cat'+(c===activeCat?' on':'')+'" onclick="setFeedCat(\''+c+'\')">'+c+'</div>'
+  ).join('');
+}
+
+function setFeedCat(c){
+  activeCat = c;
+  feedList = c==='All' ? [...PRODUCTS] : PRODUCTS.filter(p=>p.cat===c);
+  renderFeedCats();
+  renderGrid(feedList);
+  document.getElementById('allHd').textContent = c==='All' ? 'All Items' : c;
+}
+
+function toggleFeedSearch(){
+  const bar = document.getElementById('feedSearchBar');
+  bar.classList.toggle('hidden');
+  if(!bar.classList.contains('hidden'))
+    document.getElementById('feedSearchInp').focus();
+}
+
+function homeSearch(q){
+  const lq = q.toLowerCase();
+  const base = activeCat==='All' ? PRODUCTS : PRODUCTS.filter(p=>p.cat===activeCat);
+  renderGrid(base.filter(p=>p.name.toLowerCase().includes(lq)||p.desc.toLowerCase().includes(lq)));
+}
+
+function renderFeatured(){
+  const hot = PRODUCTS.filter(p=>p.hot);
+  document.getElementById('featuredRow').innerHTML = hot.map(p=>
+    '<div class="feat-card" onclick="addToCart('+p.id+',true)">' +
+      '<div class="feat-hot-badge">🔥 Hot</div>' +
+      '<div class="feat-img">'+p.emoji+'</div>' +
+      '<div class="feat-info">' +
+        '<div class="feat-name">'+p.name+'</div>' +
+        '<div class="feat-price">₱'+p.price+'</div>' +
+      '</div>' +
+    '</div>'
+  ).join('');
+}
+
+function renderGrid(list){
+  const g = document.getElementById('homeGrid');
+  if(!list.length){
+    g.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-ico">🔍</div><p>Nothing found</p></div>';
+    return;
+  }
+  g.innerHTML = list.map(p=>{
+    const inCart = cart.find(c=>c.id===p.id);
+    return '<div class="p-card">' +
+      '<div class="p-img">' +
+        (p.hot?'<div class="p-badge">🔥 Hot</div>':'') +
+        p.emoji +
+      '</div>' +
+      '<div class="p-info">' +
+        '<div class="p-name">'+p.name+'</div>' +
+        '<div class="p-desc">'+p.desc+'</div>' +
+        '<div class="p-foot">' +
+          '<div class="p-price">₱'+p.price+'</div>' +
+          '<button class="add-btn'+(inCart?' on':'')+'" id="ab-'+p.id+'" onclick="addToCart('+p.id+')">' +
+            (inCart?'✓':'+') +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function addToCart(id, fromFeatured=false){
+  const p = PRODUCTS.find(p=>p.id===id);
+  const ex = cart.find(c=>c.id===id);
+  if(ex) ex.qty++;
+  else cart.push(Object.assign({},p,{qty:1}));
+  saveCart(); updateFab();
+  const btn = document.getElementById('ab-'+id);
+  if(btn){ btn.textContent='✓'; btn.classList.add('on'); }
+  if(fromFeatured) renderGrid(feedList);
+}
+
+function saveCart(){ localStorage.setItem('sb_cart', JSON.stringify(cart)); }
+
+function updateFab(){
+  const total = cart.reduce((s,i)=>s+i.qty,0);
+  const fab = document.getElementById('cartFab');
+  document.getElementById('cartCount').textContent = total;
+  if(fab) fab.classList.toggle('hidden', total===0);
+  // nav badge
+  const nb = document.getElementById('navCartBadge');
+  if(nb){ nb.textContent=total; nb.classList.toggle('hidden',total===0); }
+}
+
+// ===== CART =====
+function renderCart(){
+  const body  = document.getElementById('cartBody');
+  const panel = document.getElementById('cartPricePanel');
+  if(!cart.length){
+    body.innerHTML='<div class="empty"><div class="empty-ico">\uD83D\uDED2</div><p>Your cart is empty</p></div>';
+    panel.classList.add('hidden'); return;
+  }
+  panel.classList.remove('hidden');
+  body.innerHTML = cart.map(item=>
+    '<div class="cart-item">' +
+      '<div class="ci-emoji">'+item.emoji+'</div>' +
+      '<div class="ci-info">' +
+        '<div class="ci-name">'+item.name+'</div>' +
+        '<div class="ci-price">\u20B1'+(item.price*item.qty).toFixed(2)+'</div>' +
+      '</div>' +
+      '<div class="qty-row">' +
+        '<button class="qty-btn" onclick="chgQty('+item.id+',-1)">\u2212</button>' +
+        '<span class="qty-num">'+item.qty+'</span>' +
+        '<button class="qty-btn" onclick="chgQty('+item.id+',1)">+</button>' +
+      '</div>' +
+      '<button class="rm-btn" onclick="rmItem('+item.id+')">\u2715</button>' +
+    '</div>'
+  ).join('');
+  const sub = cart.reduce((s,i)=>s+i.price*i.qty,0);
+  document.getElementById('cartSubtotal').textContent = '\u20B1'+sub.toFixed(2);
+  document.getElementById('cartTotal').textContent    = '\u20B1'+(sub+50).toFixed(2);
+}
+
+function chgQty(id,d){
+  const item = cart.find(c=>c.id===id);
+  if(!item) return;
+  item.qty+=d;
+  if(item.qty<=0) rmItem(id);
+  else { saveCart(); renderCart(); updateFab(); }
+}
+
+function rmItem(id){
+  cart = cart.filter(c=>c.id!==id);
+  saveCart(); renderCart(); updateFab();
+  if(curPage==='home') renderGrid(PRODUCTS);
 }
 
 // ===== ADDRESS =====
-function prefillAddress() {
-  const saved = JSON.parse(localStorage.getItem('qb_address') || '{}');
-  if (saved.name)   document.getElementById('addrName').value   = saved.name;
-  if (saved.phone)  document.getElementById('addrPhone').value  = saved.phone;
-  if (saved.street) document.getElementById('addrStreet').value = saved.street;
-  if (saved.city)   document.getElementById('addrCity').value   = saved.city;
-  if (saved.postal) document.getElementById('addrPostal').value = saved.postal;
+function prefillAddr(){
+  const s = JSON.parse(localStorage.getItem('sb_addr')||'{}');
+  ['Name','Phone','Street','City','Postal','Note'].forEach(k=>{
+    const el = document.getElementById('addr'+k);
+    if(el && s[k.toLowerCase()]) el.value = s[k.toLowerCase()];
+  });
 }
 
-function saveAddress() {
+function saveAddress(){
   const name   = document.getElementById('addrName').value.trim();
   const phone  = document.getElementById('addrPhone').value.trim();
   const street = document.getElementById('addrStreet').value.trim();
   const city   = document.getElementById('addrCity').value.trim();
   const postal = document.getElementById('addrPostal').value.trim();
-  const err    = document.getElementById('addrError');
-  err.textContent = '';
-
-  if (!name || !phone || !street || !city || !postal) {
-    err.textContent = 'Please fill in all address fields.'; return;
-  }
-
-  localStorage.setItem('qb_address', JSON.stringify({ name, phone, street, city, postal }));
-  showPage('payment');
+  const note   = document.getElementById('addrNote').value.trim();
+  const err    = document.getElementById('addrErr');
+  err.textContent='';
+  if(!name||!phone||!street||!city||!postal){ err.textContent='Please fill in all required fields.'; return; }
+  localStorage.setItem('sb_addr', JSON.stringify({name,phone,street,city,postal,note}));
+  navTo('payment');
 }
 
 // ===== PAYMENT =====
-function selectPayment(type) {
-  selectedPayment = type;
-  document.querySelectorAll('.payment-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('pay-' + type).classList.add('selected');
-  document.getElementById('cardFields').classList.toggle('hidden', type !== 'card');
-  document.getElementById('payError').textContent = '';
+function initPayment(){
+  const sub = cart.reduce((s,i)=>s+i.price*i.qty,0);
+  document.getElementById('payTotal').textContent = '\u20B1'+(sub+50).toFixed(2);
+  document.getElementById('paySumItems').innerHTML = cart.map(i=>
+    '<div class="recap-item"><span>'+i.emoji+' '+i.name+' \xD7'+i.qty+'</span><span>\u20B1'+(i.price*i.qty).toFixed(2)+'</span></div>'
+  ).join('');
 }
 
-function formatCard(input) {
-  let v = input.value.replace(/\D/g, '').substring(0, 16);
-  input.value = v.replace(/(.{4})/g, '$1 ').trim();
+function selectPay(t){
+  selPay = t;
+  document.querySelectorAll('.pay-card').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('pay-'+t).classList.add('sel');
+  document.getElementById('cardFields').classList.toggle('hidden', t!=='card');
+  document.getElementById('payErr').textContent='';
 }
 
-function placeOrder() {
-  const err = document.getElementById('payError');
-  err.textContent = '';
+function fmtCard(inp){
+  let v = inp.value.replace(/\D/g,'').substring(0,16);
+  inp.value = v.replace(/(.{4})/g,'$1 ').trim();
+}
 
-  if (!selectedPayment) { err.textContent = 'Please select a payment method.'; return; }
-
-  if (selectedPayment === 'card') {
-    const num = document.getElementById('cardNum').value.replace(/\s/g, '');
+function placeOrder(){
+  const err = document.getElementById('payErr');
+  err.textContent='';
+  if(!selPay){ err.textContent='Select a payment method.'; return; }
+  if(selPay==='card'){
+    const num = document.getElementById('cardNum').value.replace(/\s/g,'');
     const exp = document.getElementById('cardExp').value;
     const cvv = document.getElementById('cardCvv').value;
-    if (num.length < 16 || !exp || cvv.length < 3) {
-      err.textContent = 'Please enter valid card details.'; return;
-    }
+    if(num.length<16||!exp||cvv.length<3){ err.textContent='Enter valid card details.'; return; }
   }
-
-  // Save order to history
-  const sub = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const sub = cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const addr = JSON.parse(localStorage.getItem('sb_addr')||'{}');
   const order = {
     id: Date.now(),
-    date: new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }),
-    items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
-    total: sub + 50,
-    status: 'Delivered',
-    payment: selectedPayment,
+    date: new Date().toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'}),
+    items: cart.map(i=>({name:i.name,emoji:i.emoji,qty:i.qty,price:i.price})),
+    total: sub+50, status:'Delivered', payment:selPay,
+    addr: addr.street ? addr.street+', '+addr.city : '—',
   };
-
-  const history = JSON.parse(localStorage.getItem('qb_orders') || '[]');
-  history.unshift(order);
-  localStorage.setItem('qb_orders', JSON.stringify(history));
-
-  showPage('tracking');
+  const orders = JSON.parse(localStorage.getItem('sb_orders')||'[]');
+  orders.unshift(order);
+  localStorage.setItem('sb_orders', JSON.stringify(orders));
+  navTo('tracking');
 }
 
 // ===== TRACKING =====
-function startTracking() {
-  if (trackingInterval) clearInterval(trackingInterval);
-  trackStep = 0;
-  updateTrackUI();
+function startTracking(){
+  if(trackInt) clearInterval(trackInt);
+  tStep=0; updateTrack();
 
-  // Populate recap
-  const sub = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  document.getElementById('trackTotal').textContent = '₱' + (sub + 50).toFixed(2);
-  document.getElementById('trackItems').innerHTML = cart.map(i =>
-    `<div class="recap-item"><span>${i.emoji} ${i.name} x${i.qty}</span><span>₱${(i.price * i.qty).toFixed(2)}</span></div>`
+  const orders = JSON.parse(localStorage.getItem('sb_orders')||'[]');
+  const last   = orders[0]||{};
+  const addr   = JSON.parse(localStorage.getItem('sb_addr')||'{}');
+  const payMap = {card:'Credit Card',gcash:'GCash / E-Wallet',cod:'Cash on Delivery'};
+
+  document.getElementById('tiOrderId').textContent = '#'+String(last.id||0).slice(-6);
+  document.getElementById('tiAddr').textContent    = addr.street ? addr.street+', '+addr.city : '—';
+  document.getElementById('tiPay').textContent     = payMap[last.payment]||'—';
+  document.getElementById('trackTotal').textContent= '\u20B1'+(last.total||0).toFixed(2);
+  document.getElementById('trackItems').innerHTML  = (last.items||[]).map(i=>
+    '<div class="recap-item"><span>'+i.emoji+' '+i.name+' \xD7'+i.qty+'</span><span>\u20B1'+(i.price*i.qty).toFixed(2)+'</span></div>'
   ).join('');
 
-  trackingInterval = setInterval(() => {
-    if (trackStep < 3) {
-      trackStep++;
-      updateTrackUI();
-    } else {
-      clearInterval(trackingInterval);
-      // Clear cart after delivery
-      cart = [];
-      saveCart();
-    }
+  trackInt = setInterval(()=>{
+    if(tStep<3){ tStep++; updateTrack(); }
+    else{ clearInterval(trackInt); cart=[]; saveCart(); updateFab(); }
   }, 3500);
 }
 
-function updateTrackUI() {
-  const labels = ['step0','step1','step2','step3'];
-  const lines  = ['line0','line1','line2'];
-  const etas   = ['~30 mins','~20 mins','~10 mins','Delivered!'];
-
-  labels.forEach((id, i) => {
-    const dot = document.querySelector('#' + id + ' .step-dot');
-    const step = document.getElementById(id);
-    dot.classList.remove('active', 'done');
-    step.classList.remove('done');
-    if (i < trackStep)  { dot.classList.add('done'); step.classList.add('done'); }
-    if (i === trackStep) dot.classList.add('active');
+function updateTrack(){
+  const etas=['~30 mins','~20 mins','~10 mins','\uD83C\uDF89 Delivered!'];
+  ['ts0','ts1','ts2','ts3'].forEach((id,i)=>{
+    const item = document.getElementById(id);
+    const dot  = item.querySelector('.ts-dot');
+    dot.classList.remove('active','done');
+    item.classList.remove('done');
+    if(i<tStep)  { dot.classList.add('done'); item.classList.add('done'); }
+    if(i===tStep)  dot.classList.add('active');
   });
-
-  lines.forEach((id, i) => {
-    document.getElementById(id).classList.toggle('done', i < trackStep);
+  ['tl0','tl1','tl2'].forEach((id,i)=>{
+    document.getElementById(id).classList.toggle('done', i<tStep);
   });
-
-  document.getElementById('trackEta').textContent = 'Estimated delivery: ' + etas[trackStep];
+  document.getElementById('trackEta').textContent = etas[tStep];
 }
 
-// ===== ORDER HISTORY =====
-function renderHistory() {
-  const orders = JSON.parse(localStorage.getItem('qb_orders') || '[]');
-  const list = document.getElementById('historyList');
-
-  if (orders.length === 0) {
-    list.innerHTML = '<p style="color:var(--muted);text-align:center;padding:60px 0">No orders yet</p>';
+// ===== ORDERS =====
+function renderOrders(){
+  const orders = JSON.parse(localStorage.getItem('sb_orders')||'[]');
+  const el = document.getElementById('ordersList');
+  if(!orders.length){
+    el.innerHTML='<div class="empty"><div class="empty-ico">\uD83D\uDCCB</div><p>No orders yet</p></div>';
     return;
   }
+  el.innerHTML = orders.map((o,idx)=>
+    '<div class="order-card">' +
+      '<div class="oc-top">' +
+        '<div>' +
+          '<div class="oc-id">Order #'+String(orders.length-idx).padStart(3,'0')+'</div>' +
+          '<div class="oc-date">'+o.date+'</div>' +
+        '</div>' +
+        '<span class="badge b-done">'+o.status+'</span>' +
+      '</div>' +
+      '<div class="oc-items">'+o.items.map(i=>i.emoji+' '+i.name+' \xD7'+i.qty).join(' \xB7 ')+'</div>' +
+      '<div class="oc-total">\u20B1'+o.total.toFixed(2)+'</div>' +
+    '</div>'
+  ).join('');
+}
 
-  list.innerHTML = orders.map(o => `
-    <div class="history-card">
-      <div class="history-header">
-        <span class="history-date">${o.date}</span>
-        <span class="status-badge badge-delivered">${o.status}</span>
-      </div>
-      <div class="history-items">${o.items.map(i => `${i.name} x${i.qty}`).join(', ')}</div>
-      <div class="history-total">Total: ₱${o.total.toFixed(2)}</div>
-    </div>`).join('');
+// ===== PROFILE =====
+function renderProfile(){
+  const s = JSON.parse(localStorage.getItem('sb_session')||'{}');
+  document.getElementById('profileName').textContent  = s.name  || 'Guest';
+  document.getElementById('profileEmail').textContent = s.email || '—';
+  // avatar initial
+  const av = document.getElementById('profileAvatar');
+  av.textContent = s.name ? s.name.charAt(0).toUpperCase() : '\uD83D\uDC64';
+  av.style.cssText = 'font-size:36px;font-weight:900;width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--cyan));display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:#000;';
 }
 
 // ===== INIT =====
-(function init() {
-  const session = localStorage.getItem('qb_session');
-  if (session) {
-    showPage('products', false);
-  } else {
-    showPage('auth', false);
-  }
+(function(){
+  updateFab();
+  showPage(localStorage.getItem('sb_session') ? 'home' : 'auth', false);
 })();
