@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickBite — Order App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- TOP NAV (hidden on sign-in page) -->
+  <div id="topNav" class="top-nav hidden">
+    <button id="backBtn" class="back-btn" onclick="goBack()">&#8592;</button>
+    <span id="pageTitle" class="page-title">Menu</span>
+    <button class="icon-btn" onclick="showPage('history')">&#128203;</button>
+  </div>
+
+  <!-- PAGE 1: SIGN IN / SIGN UP -->
+  <div id="page-auth" class="page active">
+    <div class="auth-header">
+      <div class="logo">&#127829;</div>
+      <h1>QuickBite</h1>
+      <p>Fast food, faster delivery</p>
+    </div>
+    <div class="card">
+      <div class="tab-row">
+        <button class="tab active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+        <button class="tab" id="tabSignup" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+      <div id="loginForm">
+        <input class="input" type="email" id="loginEmail" placeholder="Email" />
+        <input class="input" type="password" id="loginPass" placeholder="Password" />
+        <div id="loginError" class="error-msg"></div>
+        <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+      </div>
+      <div id="signupForm" class="hidden">
+        <input class="input" type="text" id="signupName" placeholder="Full Name" />
+        <input class="input" type="email" id="signupEmail" placeholder="Email" />
+        <input class="input" type="password" id="signupPass" placeholder="Password" />
+        <div id="signupError" class="error-msg"></div>
+        <button class="btn btn-primary" onclick="doSignup()">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 2: PRODUCTS -->
+  <div id="page-products" class="page">
+    <div class="search-bar">
+      <input class="input search-input" type="text" placeholder="&#128269; Search food..." oninput="filterProducts(this.value)" />
+    </div>
+    <div id="productGrid" class="product-grid"></div>
+    <div id="cartFab" class="cart-fab hidden" onclick="showPage('summary')">
+      <span>&#128722;</span>
+      <span id="cartCount" class="cart-badge">0</span>
+    </div>
+  </div>
+
+  <!-- PAGE 3: ORDER SUMMARY -->
+  <div id="page-summary" class="page">
+    <div id="cartItems" class="cart-list"></div>
+    <div class="price-card card">
+      <div class="price-row"><span>Subtotal</span><span id="subtotal">₱0.00</span></div>
+      <div class="price-row"><span>Delivery Fee</span><span>₱50.00</span></div>
+      <div class="price-row total-row"><span>Total</span><span id="totalPrice">₱0.00</span></div>
+    </div>
+    <button class="btn btn-primary sticky-btn" onclick="showPage('address')">Proceed to Delivery</button>
+  </div>
+
+  <!-- PAGE 4: DELIVERY ADDRESS -->
+  <div id="page-address" class="page">
+    <div class="card form-card">
+      <input class="input" type="text" id="addrName" placeholder="Full Name" />
+      <input class="input" type="tel" id="addrPhone" placeholder="Phone Number" />
+      <input class="input" type="text" id="addrStreet" placeholder="Full Address" />
+      <input class="input" type="text" id="addrCity" placeholder="City" />
+      <input class="input" type="text" id="addrPostal" placeholder="Postal Code" />
+      <div id="addrError" class="error-msg"></div>
+    </div>
+    <button class="btn btn-primary sticky-btn" onclick="saveAddress()">Save &amp; Continue</button>
+  </div>
+
+  <!-- PAGE 5: PAYMENT -->
+  <div id="page-payment" class="page">
+    <div class="payment-options">
+      <div class="payment-card" id="pay-card" onclick="selectPayment('card')">
+        <span class="pay-icon">&#128179;</span>
+        <span>Credit / Debit Card</span>
+      </div>
+      <div class="payment-card" id="pay-gcash" onclick="selectPayment('gcash')">
+        <span class="pay-icon">&#128241;</span>
+        <span>GCash / E-Wallet</span>
+      </div>
+      <div class="payment-card" id="pay-cod" onclick="selectPayment('cod')">
+        <span class="pay-icon">&#128181;</span>
+        <span>Cash on Delivery</span>
+      </div>
+    </div>
+    <div id="cardFields" class="card form-card hidden">
+      <input class="input" type="text" id="cardNum" placeholder="Card Number" maxlength="19" oninput="formatCard(this)" />
+      <div class="row-2">
+        <input class="input" type="text" id="cardExp" placeholder="MM/YY" maxlength="5" />
+        <input class="input" type="text" id="cardCvv" placeholder="CVV" maxlength="3" />
+      </div>
+    </div>
+    <div id="payError" class="error-msg" style="padding:0 16px"></div>
+    <button class="btn btn-primary sticky-btn" onclick="placeOrder()">Place Order</button>
+  </div>
+
+  <!-- PAGE 6: ORDER TRACKING -->
+  <div id="page-tracking" class="page">
+    <div class="tracking-map card">
+      <div class="map-anim">
+        <div class="road"></div>
+        <div id="bikeIcon" class="bike">&#128690;</div>
+        <div class="dest">&#127968;</div>
+      </div>
+    </div>
+    <div class="tracker-steps card">
+      <div class="step" id="step0"><div class="step-dot active"></div><span>Order Placed</span></div>
+      <div class="step-line" id="line0"></div>
+      <div class="step" id="step1"><div class="step-dot"></div><span>Preparing</span></div>
+      <div class="step-line" id="line1"></div>
+      <div class="step" id="step2"><div class="step-dot"></div><span>Out for Delivery</span></div>
+      <div class="step-line" id="line2"></div>
+      <div class="step" id="step3"><div class="step-dot"></div><span>Delivered</span></div>
+    </div>
+    <div class="card order-recap">
+      <p id="trackEta" class="eta-text">Estimated delivery: ~30 mins</p>
+      <div id="trackItems"></div>
+      <div class="price-row total-row"><span>Total</span><span id="trackTotal"></span></div>
+    </div>
+  </div>
+
+  <!-- PAGE 7: ORDER HISTORY -->
+  <div id="page-history" class="page">
+    <div id="historyList" class="history-list"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
